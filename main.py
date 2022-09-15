@@ -4,7 +4,7 @@ import requests
 from requests import exceptions
 
 from telebot import TeleBot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InlineKeyboardButton, ReplyKeyboardMarkup
 
 group_id = None
 
@@ -74,13 +74,14 @@ def start(msg):
 def get_group(msg):
     global group_id
     group = msg.text
-    markup = InlineKeyboardMarkup()
+    markup = ReplyKeyboardMarkup(one_time_keyboard = True)
     markup.add(InlineKeyboardButton(text='Просмотр расписания по дате',
                                     callback_data='Просмотр расписания по дате'))
     markup.add(InlineKeyboardButton(text='Просмотр расписания на завтра',
                                     callback_data='Просмотр расписания на завтра'))
     # markup.add(InlineKeyboardButton(text='Просмотр расписания до конца недели',
     #                                 callback_data='Просмотр расписания до конца недели'))
+    bot.register_next_step_handler(msg, test)
     try:
         group_id = [i['id'] for i in groups_list if i['name'] == group][0]
         bot.send_message(msg.from_user.id,
@@ -89,6 +90,10 @@ def get_group(msg):
     except IndexError:
         retry_msg(msg, 'get_group')
 
+
+@bot.message_handler(content_types=['text'])
+def test(msg):
+    print(msg)
 
 @bot.message_handler(content_types=['text'])
 def retry_msg(msg, func_name):
@@ -105,10 +110,10 @@ def retry_msg(msg, func_name):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     req = call.data.split('_')
-    markup1 = InlineKeyboardMarkup()
+    markup1 = ReplyKeyboardMarkup(one_time_keyboard = True)
     markup1.add(InlineKeyboardButton(text='Выбор действия',
                                      callback_data='Выбор действия'))
-    markup2 = InlineKeyboardMarkup()
+    markup2 = ReplyKeyboardMarkup(one_time_keyboard = True)
     markup2.add(InlineKeyboardButton(text='Просмотр расписания по дате',
                                      callback_data='Просмотр расписания по дате'))
     markup2.add(InlineKeyboardButton(text='Просмотр расписания на завтра',
@@ -130,7 +135,7 @@ def callback_query(call):
 @bot.message_handler(content_types=['text'])
 def timetable_date(msg):
     global group_id
-    markup = InlineKeyboardMarkup()
+    markup = ReplyKeyboardMarkup(one_time_keyboard = True)
     markup.add(InlineKeyboardButton(text='Выбор действия',
                                     callback_data='Выбор действия'))
     try:
@@ -139,7 +144,7 @@ def timetable_date(msg):
         if timetable:
             day = list(timetable.keys())[0] + '\n'
             message = [day]
-            for i in range(len(list(timetable.items())[0])):
+            for i in range(len(list(timetable.values())[0])):
                 number = list(list(timetable.values())[0][i].keys())[0]
                 data = list(timetable.values())[0][i][number]
                 start = data['start']
